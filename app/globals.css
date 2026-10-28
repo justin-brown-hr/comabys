@@ -1,26 +1,133 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #001a33;
+  --navy-deep: #001022;
+  --navy-mid: #0a2744;
+  --teal: #00c2cb;
+  --teal-dark: #00a8b0;
+  --teal-soft: #e6f9fa;
+  --ink: #0f1c2e;
+  --muted: #5a6b7d;
+  --line: #d7e0ea;
+  --surface: #f5f8fb;
+  --white: #ffffff;
+  --background: var(--white);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-mid: var(--navy-mid);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-teal-soft: var(--teal-soft);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --font-sans: var(--font-plus-jakarta);
+  --font-display: var(--font-plus-jakarta);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-plus-jakarta), system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--teal) 35%, white);
+  color: var(--navy);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.7s ease both;
+}
+
+.delay-1 {
+  animation-delay: 0.12s;
+}
+
+.delay-2 {
+  animation-delay: 0.24s;
+}
+
+.delay-3 {
+  animation-delay: 0.36s;
+}
+
+.delay-4 {
+  animation-delay: 0.48s;
+}
+
+.cta-pattern {
+  background-image:
+    radial-gradient(
+      circle at 12% 40%,
+      color-mix(in srgb, var(--teal) 18%, transparent) 0,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 88% 60%,
+      color-mix(in srgb, var(--teal) 12%, transparent) 0,
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      transparent 0%,
+      color-mix(in srgb, white 4%, transparent) 50%,
+      transparent 100%
+    );
+}
+
+.hero-overlay {
+  background:
+    linear-gradient(
+      105deg,
+      rgba(0, 16, 34, 0.88) 0%,
+      rgba(0, 26, 51, 0.72) 42%,
+      rgba(0, 26, 51, 0.35) 72%,
+      rgba(0, 26, 51, 0.2) 100%
+    ),
+    radial-gradient(
+      ellipse at 70% 45%,
+      color-mix(in srgb, var(--teal) 22%, transparent),
+      transparent 55%
+    );
 }

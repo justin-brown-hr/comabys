@@ -19,6 +19,8 @@
 
 # production
 /build
+*.zip
+comabys-site.zip
 
 # misc
 .DS_Store
