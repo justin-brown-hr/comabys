@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   },
   description:
     "Comabys Consulting helps organizations connect systems, strengthen data foundations, modernize the cloud, and build resilient operations. Based in Bethesda, MD.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
