@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ContactForm } from "@/components/ContactForm";
 import { SectionLabel } from "@/components/SectionLabel";
 
 export const metadata: Metadata = {
@@ -86,69 +87,7 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <form
-          action="mailto:info@comabys.com"
-          method="post"
-          encType="text/plain"
-          className="space-y-4 rounded-xl border border-line bg-white p-5 shadow-sm md:p-7"
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-medium text-navy">
-              First name
-              <input
-                type="text"
-                name="firstName"
-                required
-                className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
-              />
-            </label>
-            <label className="block text-sm font-medium text-navy">
-              Last name
-              <input
-                type="text"
-                name="lastName"
-                required
-                className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
-              />
-            </label>
-          </div>
-          <label className="block text-sm font-medium text-navy">
-            Work email
-            <input
-              type="email"
-              name="email"
-              required
-              className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
-            />
-          </label>
-          <label className="block text-sm font-medium text-navy">
-            Organization
-            <input
-              type="text"
-              name="organization"
-              className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
-            />
-          </label>
-          <label className="block text-sm font-medium text-navy">
-            How can we help?
-            <textarea
-              name="message"
-              rows={5}
-              required
-              className="mt-1.5 w-full resize-y rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
-            />
-          </label>
-          <button
-            type="submit"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-dark sm:w-auto"
-          >
-            Send Message
-            <span aria-hidden>→</span>
-          </button>
-          <p className="text-xs text-muted">
-            Submitting opens your email client to send the message to our team.
-          </p>
-        </form>
+        <ContactForm />
       </div>
     </section>
   );
