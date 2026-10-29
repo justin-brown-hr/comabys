@@ -1,110 +1,25 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-
-type Status = "idle" | "sending" | "sent" | "error";
+import { useEffect, useState } from "react";
 
 const CONTACT_EMAIL = "info@comabys.com";
 
 export function ContactForm() {
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus("sending");
-    setErrorMessage("");
-
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const firstName = String(data.get("firstName") || "").trim();
-    const lastName = String(data.get("lastName") || "").trim();
-    const email = String(data.get("email") || "").trim();
-    const organization = String(data.get("organization") || "").trim();
-    const message = String(data.get("message") || "").trim();
-    const website = String(data.get("website") || "").trim(); // honeypot
-
-    if (website) {
-      setStatus("sent");
-      form.reset();
-      return;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sent") === "1") {
+      setSent(true);
+      // Clean the URL without reloading
+      const url = new URL(window.location.href);
+      url.searchParams.delete("sent");
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
     }
+  }, []);
 
-    const payload = {
-      name: `${firstName} ${lastName}`.trim(),
-      firstName,
-      lastName,
-      email,
-      organization,
-      message,
-      _subject: `Comabys website inquiry from ${firstName} ${lastName}`.trim(),
-      _template: "table",
-      _replyto: email,
-    };
-
-    try {
-      // Prefer same-origin PHP handler on Network Solutions hosting
-      try {
-        const phpResponse = await fetch("/contact.php", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (phpResponse.ok) {
-          const result = (await phpResponse.json().catch(() => null)) as
-            | { ok?: boolean; error?: string }
-            | null;
-          if (result?.ok === true) {
-            setStatus("sent");
-            form.reset();
-            return;
-          }
-        }
-      } catch {
-        // PHP unavailable locally / on non-PHP hosts — use FormSubmit below
-      }
-
-      // Fallback: FormSubmit (works on static hosting after one-time email confirm)
-      const submitResponse = await fetch(
-        `https://formsubmit.co/ajax/${CONTACT_EMAIL}`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      const result = (await submitResponse.json().catch(() => null)) as
-        | { success?: string | boolean; message?: string }
-        | null;
-
-      if (!submitResponse.ok) {
-        throw new Error(
-          result?.message ||
-            "Message could not be delivered. Please email us directly.",
-        );
-      }
-
-      setStatus("sent");
-      form.reset();
-    } catch (error) {
-      setStatus("error");
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Message could not be delivered. Please email us directly.",
-      );
-    }
-  }
-
-  if (status === "sent") {
+  if (sent) {
     return (
       <div className="rounded-xl border border-teal/30 bg-teal-soft/60 p-6 md:p-7">
         <h2 className="text-lg font-bold text-navy">Message sent</h2>
@@ -115,7 +30,7 @@ export function ContactForm() {
         <button
           type="button"
           className="mt-5 inline-flex items-center gap-2 rounded-md bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-mid"
-          onClick={() => setStatus("idle")}
+          onClick={() => setSent(false)}
         >
           Send another message
         </button>
@@ -125,14 +40,24 @@ export function ContactForm() {
 
   return (
     <form
-      onSubmit={onSubmit}
+      action={`https://formsubmit.co/${CONTACT_EMAIL}`}
+      method="POST"
       className="space-y-4 rounded-xl border border-line bg-white p-5 shadow-sm md:p-7"
-      noValidate={false}
+      onSubmit={() => setSending(true)}
     >
+      {/* FormSubmit controls */}
+      <input type="hidden" name="_subject" value="Comabys website inquiry" />
+      <input type="hidden" name="_template" value="table" />
+      <input type="hidden" name="_captcha" value="false" />
+      <input
+        type="hidden"
+        name="_next"
+        value="https://comabys.com/contact/?sent=1"
+      />
       {/* Honeypot */}
       <input
         type="text"
-        name="website"
+        name="_honey"
         tabIndex={-1}
         autoComplete="off"
         className="hidden"
@@ -146,7 +71,7 @@ export function ContactForm() {
             type="text"
             name="firstName"
             required
-            disabled={status === "sending"}
+            disabled={sending}
             className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20 disabled:opacity-60"
           />
         </label>
@@ -156,7 +81,7 @@ export function ContactForm() {
             type="text"
             name="lastName"
             required
-            disabled={status === "sending"}
+            disabled={sending}
             className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20 disabled:opacity-60"
           />
         </label>
@@ -167,7 +92,7 @@ export function ContactForm() {
           type="email"
           name="email"
           required
-          disabled={status === "sending"}
+          disabled={sending}
           className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20 disabled:opacity-60"
         />
       </label>
@@ -176,7 +101,7 @@ export function ContactForm() {
         <input
           type="text"
           name="organization"
-          disabled={status === "sending"}
+          disabled={sending}
           className="mt-1.5 w-full rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20 disabled:opacity-60"
         />
       </label>
@@ -186,33 +111,23 @@ export function ContactForm() {
           name="message"
           rows={5}
           required
-          disabled={status === "sending"}
+          disabled={sending}
           className="mt-1.5 w-full resize-y rounded-md border border-line px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20 disabled:opacity-60"
         />
       </label>
 
-      {status === "error" ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {errorMessage}{" "}
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="font-semibold underline"
-          >
-            {CONTACT_EMAIL}
-          </a>
-        </p>
-      ) : null}
-
       <button
         type="submit"
-        disabled={status === "sending"}
+        disabled={sending}
         className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-dark disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
-        {status === "sending" ? "Sending…" : "Send Message"}
-        {status === "sending" ? null : <span aria-hidden>→</span>}
+        {sending ? "Sending…" : "Send Message"}
+        {sending ? null : <span aria-hidden>→</span>}
       </button>
       <p className="text-xs text-muted">
-        Messages are delivered to {CONTACT_EMAIL}.
+        Messages are delivered to {CONTACT_EMAIL}. If this is the first
+        submission, check that inbox for a one-time activation link from
+        FormSubmit, then try again.
       </p>
     </form>
   );
