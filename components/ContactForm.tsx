@@ -1,23 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 
 const CONTACT_EMAIL = "info@comabys.com";
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("sent") === "1") {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSending(true);
+    setError(null);
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          firstName: String(data.get("firstName") || ""),
+          lastName: String(data.get("lastName") || ""),
+          email: String(data.get("email") || ""),
+          organization: String(data.get("organization") || ""),
+          message: String(data.get("message") || ""),
+          website: String(data.get("website") || ""),
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(
+          result?.error ||
+            `Unable to send message (HTTP ${response.status}). Please email ${CONTACT_EMAIL}.`,
+        );
+      }
+
+      form.reset();
       setSent(true);
-      // Clean the URL without reloading
-      const url = new URL(window.location.href);
-      url.searchParams.delete("sent");
-      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : `Unable to send message. Please email ${CONTACT_EMAIL}.`;
+      // Network / Failed to fetch
+      if (message === "Failed to fetch" || err instanceof TypeError) {
+        setError(
+          `Could not reach the server. Please email ${CONTACT_EMAIL} directly.`,
+        );
+      } else {
+        setError(message);
+      }
+    } finally {
+      setSending(false);
     }
-  }, []);
+  }
 
   if (sent) {
     return (
@@ -40,24 +84,14 @@ export function ContactForm() {
 
   return (
     <form
-      action={`https://formsubmit.co/${CONTACT_EMAIL}`}
-      method="POST"
+      onSubmit={handleSubmit}
       className="space-y-4 rounded-xl border border-line bg-white p-5 shadow-sm md:p-7"
-      onSubmit={() => setSending(true)}
+      noValidate
     >
-      {/* FormSubmit controls */}
-      <input type="hidden" name="_subject" value="Comabys website inquiry" />
-      <input type="hidden" name="_template" value="table" />
-      <input type="hidden" name="_captcha" value="false" />
-      <input
-        type="hidden"
-        name="_next"
-        value="https://comabys.com/contact/?sent=1"
-      />
       {/* Honeypot */}
       <input
         type="text"
-        name="_honey"
+        name="website"
         tabIndex={-1}
         autoComplete="off"
         className="hidden"
@@ -116,6 +150,12 @@ export function ContactForm() {
         />
       </label>
 
+      {error ? (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">
+          {error}
+        </p>
+      ) : null}
+
       <button
         type="submit"
         disabled={sending}
@@ -125,9 +165,7 @@ export function ContactForm() {
         {sending ? null : <span aria-hidden>→</span>}
       </button>
       <p className="text-xs text-muted">
-        Messages are delivered to {CONTACT_EMAIL}. If this is the first
-        submission, check that inbox for a one-time activation link from
-        FormSubmit, then try again.
+        Messages are delivered to {CONTACT_EMAIL}.
       </p>
     </form>
   );

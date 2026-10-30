@@ -1,7 +1,7 @@
 <?php
 /**
  * Optional same-origin handler for Network Solutions (if PHP mail is enabled).
- * The public form posts to FormSubmit by default to avoid CORS / mail() issues.
+ * Optional Network Solutions fallback. Preferred path is Next.js /api/contact on Vercel.
  */
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
