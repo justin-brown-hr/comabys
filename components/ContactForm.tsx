@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 
 const CONTACT_EMAIL = "info@comabys.com";
+const ACCESS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
@@ -17,46 +18,71 @@ export function ContactForm() {
     const form = event.currentTarget;
     const data = new FormData(form);
 
+    // Honeypot — pretend success for bots
+    if (String(data.get("website") || "").trim()) {
+      setSent(true);
+      setSending(false);
+      return;
+    }
+
+    if (!ACCESS_KEY) {
+      setError(
+        `Contact form is not configured. Please email ${CONTACT_EMAIL} directly.`,
+      );
+      setSending(false);
+      return;
+    }
+
+    const firstName = String(data.get("firstName") || "").trim();
+    const lastName = String(data.get("lastName") || "").trim();
+    const email = String(data.get("email") || "").trim();
+    const organization = String(data.get("organization") || "").trim();
+    const message = String(data.get("message") || "").trim();
+
     try {
-      const response = await fetch("/api/contact", {
+      const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({
-          firstName: String(data.get("firstName") || ""),
-          lastName: String(data.get("lastName") || ""),
-          email: String(data.get("email") || ""),
-          organization: String(data.get("organization") || ""),
-          message: String(data.get("message") || ""),
-          website: String(data.get("website") || ""),
+          access_key: ACCESS_KEY,
+          subject: "New inquiry from comabys.com",
+          from_name: "Comabys Website",
+          name: `${firstName} ${lastName}`.trim(),
+          email,
+          organization: organization || "(not provided)",
+          message,
+          botcheck: "",
         }),
       });
 
       const result = (await response.json().catch(() => null)) as {
-        ok?: boolean;
-        error?: string;
+        success?: boolean;
+        message?: string;
       } | null;
 
-      if (!response.ok || !result?.ok) {
+      if (!response.ok || !result?.success) {
         throw new Error(
-          result?.error ||
-            `Unable to send message (HTTP ${response.status}). Please email ${CONTACT_EMAIL}.`,
+          result?.message ||
+            `Unable to send message. Please email ${CONTACT_EMAIL}.`,
         );
       }
 
       form.reset();
       setSent(true);
     } catch (err) {
-      const message =
+      const messageText =
         err instanceof Error
           ? err.message
           : `Unable to send message. Please email ${CONTACT_EMAIL}.`;
-      // Network / Failed to fetch
-      if (message === "Failed to fetch" || err instanceof TypeError) {
+      if (messageText === "Failed to fetch" || err instanceof TypeError) {
         setError(
-          `Could not reach the server. Please email ${CONTACT_EMAIL} directly.`,
+          `Could not reach the mail service. Please email ${CONTACT_EMAIL} directly.`,
         );
       } else {
-        setError(message);
+        setError(messageText);
       }
     } finally {
       setSending(false);
